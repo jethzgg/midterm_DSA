@@ -1,174 +1,140 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct data
-{
-    int val;
-    struct data *next;
-    struct data *prev;
-} data;
-
-typedef struct Deque
-{
-    data *head;
-    data *tail;
+typedef struct Deque {
+    int *arr;
+    int front_idx;
+    int rear_idx;
     int numsItems;
+    int capacity;
 } Deque;
 
-data *makenewNode(int x)
-{
-    data *newNode = (data*)malloc(sizeof(data));
-    newNode->next = NULL;
-    newNode->prev = NULL;
-    newNode->val = x;
-    return newNode;
-}
-
-Deque *Init()
-{
-    Deque *d = (Deque*)malloc(sizeof(Deque));
-    d->head = NULL;
-    d->tail = NULL;
+Deque* Init(int cap) {
+    if (cap <= 0) {
+        return NULL;
+    }
+    Deque* d = (Deque*)malloc(sizeof(Deque));
+    if (!d) {
+        return NULL;
+    }
+    d->arr = (int*)malloc(cap * sizeof(int));
+    if (!d->arr) {
+        free(d);
+        return NULL;
+    }
+    d->capacity = cap;
+    d->front_idx = -1;
+    d->rear_idx = 0;
     d->numsItems = 0;
     return d;
 }
 
-int isEmpty(Deque *d)
-{
-    return d->numsItems == 0;
+int isFull(Deque* d) {
+    if (!d) return 0;
+    return (d->numsItems == d->capacity);
 }
 
-void push_front(Deque *d, int x)
-{
-    data *newNode = makenewNode(x);
-    if (d->head == NULL)
-    {
-        d->head = newNode;
-        d->tail = newNode;
-    }
-    else if (d->head == d->tail)
-    {
-        d->head = newNode;
-        d->head->next = d->tail;
-        d->tail->prev = d->head;
-    }
-    else
-    {
-        newNode->next = d->head;
-        d->head->prev = newNode;
-        d->head = newNode;
-    }
-    d->numsItems += 1;
+int isEmpty(Deque* d) {
+    if (!d) return 1;
+    return (d->numsItems == 0);
 }
 
-void push_back(Deque *d, int x)
-{
-    data *newNode = makenewNode(x);
-    if (d->head == NULL)
-    {
-        d->head = newNode;
-        d->tail = newNode;
+void push_front(Deque* d, int x) {
+    if (!d || isFull(d)) {
+        return;
     }
-    else if (d->head == d->tail)
-    {
-        d->tail = newNode;
-        d->head->next = d->tail;
-        d->tail->prev = d->head;
+    if (isEmpty(d)) {
+        d->front_idx = 0;
+        d->rear_idx = 0;
+    } else if (d->front_idx == 0) {
+        d->front_idx = d->capacity - 1;
+    } else {
+        d->front_idx = d->front_idx - 1;
     }
-    else
-    {
-        newNode->prev = d->tail;
-        d->tail->next = newNode;
-        d->tail = newNode;
-    }
-    d->numsItems += 1;
+    d->arr[d->front_idx] = x;
+    d->numsItems = d->numsItems + 1;
 }
 
-int front(Deque *d)
-{
-    if (!isEmpty(d)) return d->head->val;
-    return -1;
+void push_back(Deque* d, int x) {
+    if (!d || isFull(d)) {
+        return;
+    }
+    if (isEmpty(d)) {
+        d->front_idx = 0;
+        d->rear_idx = 0;
+    } else if (d->rear_idx == d->capacity - 1) {
+        d->rear_idx = 0;
+    } else {
+        d->rear_idx = d->rear_idx + 1;
+    }
+    d->arr[d->rear_idx] = x;
+    d->numsItems = d->numsItems + 1;
 }
 
-int back(Deque *d)
-{
-    if (!isEmpty(d)) return d->tail->val;
-    return -1;
+int pop_front(Deque* d) {
+    if (!d || isEmpty(d)) {
+        return -1;
+    }
+    int item = d->arr[d->front_idx];
+    d->numsItems = d->numsItems - 1;
+    if (isEmpty(d)) {
+        d->front_idx = -1;
+        d->rear_idx = 0;
+    } else if (d->front_idx == d->capacity - 1) {
+        d->front_idx = 0;
+    } else {
+        d->front_idx = d->front_idx + 1;
+    }
+    return item;
 }
 
-int pop_front(Deque *d)
-{
-    if (!isEmpty(d))
-    {
-        int a = front(d);
-        if (d->head == d->tail)
-        {
-            d->tail = NULL;
-            free(d->head);
-            d->head = NULL;
+int pop_back(Deque* d) {
+    if (!d || isEmpty(d)) {
+        return -1;
+    }
+    int item = d->arr[d->rear_idx];
+    d->numsItems = d->numsItems - 1;
+    if (isEmpty(d)) {
+        d->front_idx = -1;
+        d->rear_idx = 0;
+    } else if (d->rear_idx == 0) {
+        d->rear_idx = d->capacity - 1;
+    } else {
+        d->rear_idx = d->rear_idx - 1;
+    }
+    return item;
+}
+
+int front(Deque* d) {
+    if (!d || isEmpty(d)) {
+        return -1;
+    }
+    return d->arr[d->front_idx];
+}
+
+int back(Deque* d) {
+    if (!d || isEmpty(d)) {
+        return -1;
+    }
+    return d->arr[d->rear_idx];
+}
+
+void destroy(Deque* d) {
+    if (d) {
+        if (d->arr) {
+            free(d->arr);
         }
-        else
-        {
-            data *del = d->head;
-            d->head = d->head->next;
-            d->head->prev = NULL;
-            free(del);
-        }
-        d->numsItems -= 1;
-        return a;
-    }
-    return -1;
-}
-
-int pop_back(Deque *d)
-{
-    if (!isEmpty(d))
-    {
-        int a = back(d);
-        if (d->head == d->tail)
-        {
-            d->head = NULL;
-            free(d->tail);
-            d->tail = NULL;
-        }
-        else
-        {
-            data *del = d->tail;
-            d->tail = d->tail->prev;
-            d->tail->next = NULL;
-            free(del);
-        }
-        d->numsItems -= 1;
-        return a;
-    }
-    return -1;
-}
-
-void destroy(Deque *d)
-{
-    if (!isEmpty(d))
-    {
-        data *del = d->head;
-        while (d->head != NULL)
-        {
-            d->head = d->head->next;
-            free(del);
-            del = d->head;
-        }
+        free(d);
     }
 }
 
-int n,m,r,c,a[500][500], visited[500][500], distance[500][500];
+int n,m,r,c,a[1000][1000], visited[1000][1000], distance[1000][1000];
 
-int min1(int a, int b)
-{
-    return ((a < b) ? a : b);
-}
 
 int main()
 {
-	Deque *di = Init();
-    Deque *dj = Init();
+	Deque *di = Init(1000);
+    Deque *dj = Init(1000);
     scanf("%d %d %d %d", &n, &m, &r ,&c);
     for (int i = 0; i < n; i++)
     {
@@ -191,6 +157,7 @@ int main()
     push_back(di,r - 1);
     push_back(dj,c - 1);
     distance[r - 1][c - 1] = 0;
+    visited[r - 1][c - 1] = 1;
     int i1[4] = {-1, 0, 1, 0};
     int j1[4] = {0, -1, 0, 1};
     int i, j;
@@ -200,7 +167,7 @@ int main()
         j = pop_front(dj);
         if (i != -1 && j != - 1)
         {
-            visited[i][j] = 1;
+            
             if (i == (n - 1) || i == 0 && a[i][j] != 1)
             {
                 printf("%d\n",distance[i][j] + 1);
@@ -223,6 +190,7 @@ int main()
                     {
                         push_back(di, i + i1[t]);
                         push_back(dj, j + j1[t]);
+                        visited[i + i1[t]][j + j1[t]] = 1;
                         distance[i + i1[t]][j + j1[t]] = 1 + distance[i][j];
                     }
                 }
